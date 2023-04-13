@@ -9,9 +9,14 @@ import threading
 import time
 from typing import List
 import requests
-import iterfzf
+
 from flask import Flask, request, abort
 from tqdm import tqdm
+
+try:
+    import iterfzf
+except ImportError:
+    iterfzf = None
 
 ERROR = 0
 MCAST_GRP = "224.1.1.1"
@@ -170,7 +175,10 @@ def share(filename, target_ip=None, port=8000):
         elif len(devices) == 1:
             target_ip = devices[0]
         else:
-            target_ip = iterfzf.iterfzf(devices)
+            if iterfzf is not None:
+                target_ip = iterfzf.iterfzf(devices)
+            else:
+                target_ip = select_device()
 
     filesize = os.path.getsize(filename)
     file_size = f'{int(filesize) / 1024 / 1024:.2f} MB'
