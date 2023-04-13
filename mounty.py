@@ -32,14 +32,14 @@ def discover_devices(timeout=1) -> List[str]:
     # Set up a multicast socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(('', DISCOVERY_PORT))  # Update this line
+    sock.bind(('', DISCOVERY_PORT))
     mreq = struct.pack("4sl", socket.inet_aton(DISCOVERY_MCAST_GRP), socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
     sock.setblocking(0)
 
     # Send multicast discovery message
     message = b"mounty_discover"
-    sock.sendto(message, (DISCOVERY_MCAST_GRP, DISCOVERY_MCAST_PORT))  # Update this line
+    sock.sendto(message, (DISCOVERY_MCAST_GRP, DISCOVERY_MCAST_PORT))
 
     # Listen for device responses
     start_time = time.time()
@@ -58,7 +58,7 @@ def multicast_listener():
     # Set up a multicast socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(('', DISCOVERY_MCAST_PORT))  # Update this line
+    sock.bind(('', DISCOVERY_MCAST_PORT))
     mreq = struct.pack("4sl", socket.inet_aton(DISCOVERY_MCAST_GRP), socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
