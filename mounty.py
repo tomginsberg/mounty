@@ -138,16 +138,16 @@ def listen(port=8000, auto_confirm=False):
                     download_time = end_time - start_time
                     print(f"{bold_text('Download time:')} {download_time:.2f} seconds")
                     print(f"{bold_text('Download speed:')} {file_size / download_time / 1024 / 1024:.2f} MB/s")
-                    print(f'{bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
+                    print(f'\n🔎 {bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
                     return "File received", 200
                 else:
-                    print(f'🔎 {bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
+                    print(f'\n🔎 {bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
                     abort(403)
             else:
-                print(f'🔎 {bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
+                print(f'\n🔎 {bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
                 abort(400)
 
-        print(f'🔎 {bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
+        print(f'\n🔎 {bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
         return "Invalid request", 400
 
     print(f'🗻 {bold_text("Mounty is listening on:")} {colorful_text(get_local_ip(), 32)}')
