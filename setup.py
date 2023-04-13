@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='mounty',
     version='0.1',
-    py_modules=['mounty'],
+    py_modules=['mounty.py'],
     install_requires=open('requirements.txt').readlines(),
     entry_points={
         'console_scripts': [
