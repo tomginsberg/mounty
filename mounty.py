@@ -127,7 +127,14 @@ def listen(port=8000, auto_confirm=False):
                     file_data = request.get_data()
                     file_size = len(file_data)
 
-                    with open(filename, "wb") as f:
+                    if os.path.exists(os.path.basename(filename)):
+                        # ask for overwrite
+                        overwrite = input(f'{bold_text("File already exists. Would you like to overwrite it? (y/n) ")}')
+                        if overwrite.lower() != "y":
+                            print(f'{bold_text("File not saved.")}')
+                            return "File not saved", 200
+
+                    with open(os.path.basename(filename), "wb") as f:
                         for chunk in tqdm(
                                 (file_data[i: i + 1024] for i in range(0, file_size, 1024)),
                                 total=(file_size // 1024) + 1,
