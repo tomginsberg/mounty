@@ -132,7 +132,8 @@ def listen(port=8000, auto_confirm=False):
                         overwrite = input(f'{bold_text("File already exists. Would you like to overwrite it? (y/n) ")}')
                         if overwrite.lower() != "y":
                             print(f'{bold_text("File not saved.")}')
-                            return "File not saved", 200
+                            print(f'\n🔎 {bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
+                            return "File not saved", 418
 
                     with open(os.path.basename(filename), "wb") as f:
                         for chunk in tqdm(
@@ -151,7 +152,7 @@ def listen(port=8000, auto_confirm=False):
                     return "File received", 200
                 else:
                     print(f'\n🔎 {bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
-                    abort(403)
+                    abort(418)
             else:
                 print(f'\n🔎 {bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
                 abort(400)
