@@ -194,7 +194,7 @@ def share(filename, target_ip=None, port=8000):
             with open(filename, 'rb') as f:
                 response = requests.post(url, data=f, headers={
                     "Content-Length": str(filesize),
-                    "X-Filename": filename,
+                    "X-Filename": os.path.basename(filename),
                     "X-Filesize": str(filesize),
                 })
         # otherwise read from std in
