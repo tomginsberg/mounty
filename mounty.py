@@ -176,8 +176,12 @@ def share(filename, target_ip=None, port=8000):
                 target_ip = iterfzf.iterfzf(devices)
             else:
                 target_ip = select_device()
+    if filename is not None:
+        filesize = os.path.getsize(filename)
+    else:
+        file_data = sys.stdin.buffer.read()
+        filesize = len(file_data)
 
-    filesize = os.path.getsize(filename)
     file_size = f'{int(filesize) / 1024 / 1024:.2f} MB'
 
     print(f'{bold_text("Sharing:")} {colorful_text(filename, 34)}')
@@ -195,7 +199,6 @@ def share(filename, target_ip=None, port=8000):
                 })
         # otherwise read from std in
         else:
-            file_data = sys.stdin.buffer.read()
             response = requests.post(url, data=file_data, headers={
                 "Content-Length": str(len(file_data)),
                 "X-Filename": "download",
