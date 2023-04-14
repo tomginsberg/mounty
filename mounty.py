@@ -186,11 +186,20 @@ def share(filename, target_ip=None, port=8000):
 
     url = f'http://{target_ip}:{port}/'
     try:
-        with open(filename, 'rb') as f:
-            response = requests.post(url, data=f, headers={
-                "Content-Length": str(filesize),
-                "X-Filename": filename,
-                "X-Filesize": str(filesize),
+        if filename is not None:
+            with open(filename, 'rb') as f:
+                response = requests.post(url, data=f, headers={
+                    "Content-Length": str(filesize),
+                    "X-Filename": filename,
+                    "X-Filesize": str(filesize),
+                })
+        # otherwise read from std in
+        else:
+            file_data = sys.stdin.buffer.read()
+            response = requests.post(url, data=file_data, headers={
+                "Content-Length": str(len(file_data)),
+                "X-Filename": "download",
+                "X-Filesize": str(len(file_data)),
             })
         print(
             f'{bold_text("Response:")} {colorful_text(response.status_code, 34)} {colorful_text(response.reason, 34)}')
@@ -208,7 +217,7 @@ def main():
     listen_parser.add_argument('-y', '--yes', help='Automatically accept incoming files', action='store_true')
 
     share_parser = subparsers.add_parser('share', help='Share a file with another device')
-    share_parser.add_argument('filename', help='File to share')
+    share_parser.add_argument('filename', help='File to share', default=None, nargs='?')
     share_parser.add_argument('target_ip', help='Target IP address', default=None, nargs='?')
     share_parser.add_argument('port', help='Port to Share On', default=8000, type=int, nargs='?')
 
