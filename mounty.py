@@ -161,7 +161,7 @@ def listen(port=8000, auto_confirm=False):
 
 def share(filename, target_ip=None, port=8000):
     print(f'🗻 {bold_text("Mounty is sharing:")} {colorful_text(filename, 32)}')
-    if not os.path.exists(filename):
+    if filename is not None and not os.path.exists(filename):
         print(f'{bold_text("Error:")} {colorful_text("File not found.", 31)}')
         sys.exit(1)
     if target_ip is None:
