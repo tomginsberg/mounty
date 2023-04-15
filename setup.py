@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='mounty',
-    version='0.1',
+    version='1.0',
     py_modules=['mounty'],
     install_requires=open('requirements.txt').readlines(),
     entry_points={
