@@ -263,7 +263,6 @@ def main():
 
     share_parser = subparsers.add_parser('share', help='Share a file with another device')
     share_parser.add_argument('filename', help='File to share', default=None, nargs='?')
-    share_parser.add_argument('target_ip', help='Target IP address', default=None, nargs='?')
     share_parser.add_argument('port', help='Port to Share On', default=8000, type=int, nargs='?')
 
     subparsers.add_parser('discover', help='Discover devices on the local network')
@@ -280,7 +279,7 @@ def main():
             print("\nShutting down...")
             sys.exit(0)
     elif args.command == 'share':
-        share(args.filename, args.target_ip)
+        share(args.filename, port=args.port)
     elif args.command == 'discover':
         devices = discover_devices()
         if len(devices) == 0:
