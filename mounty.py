@@ -213,6 +213,8 @@ def share(filename, target_ip=None, port=8000):
                 target_ip = iterfzf.iterfzf(devices)
             else:
                 target_ip = select_device()
+        target_ip = target_ip.split(":")[0]
+
     if filename is not None:
         filesize = os.path.getsize(filename)
     else:
