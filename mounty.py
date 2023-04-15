@@ -7,6 +7,7 @@ import struct
 import sys
 import threading
 import time
+import warnings
 from typing import List
 import requests
 
@@ -18,9 +19,9 @@ try:
 except ImportError:
     iterfzf = None
 
-DISCOVERY_MCAST_GRP = "239.255.16.27"
-DISCOVERY_MCAST_PORT = 5008
-DISCOVERY_PORT = 5009
+DISCOVERY_MCAST_GRP = os.environ.get("DISCOVERY_MCAST_GRP", "239.255.16.27")
+DISCOVERY_MCAST_PORT = int(os.environ.get("DISCOVERY_MCAST_PORT", 5008))
+DISCOVERY_PORT = int(os.environ.get("DISCOVERY_PORT", 5009))
 
 
 def discover_devices(timeout=1) -> List[str]:
@@ -44,8 +45,8 @@ def discover_devices(timeout=1) -> List[str]:
         ready = select.select([sock], [], [], timeout)
         if ready[0]:
             data, addr = sock.recvfrom(1024)
-            if data and data.decode("utf-8") == "mounty_here":
-                devices.append(addr[0])
+            if data and data.decode("utf-8").startswith("mounty_here"):
+                devices.append(f'{data.decode("utf-8").split(":")[1]} ({addr[0]})')
 
     sock.close()
     return devices
@@ -58,12 +59,33 @@ def multicast_listener():
     sock.bind(('', DISCOVERY_MCAST_PORT))
     mreq = struct.pack("4sl", socket.inet_aton(DISCOVERY_MCAST_GRP), socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    device_name = get_device_name()
 
     while True:
         data, addr = sock.recvfrom(1024)
         if data and data.decode("utf-8") == "mounty_discover":
-            response = b"mounty_here"
+            response = f"mounty_here:{device_name}".encode("utf-8")
             sock.sendto(response, addr)
+
+
+def register_device(name, registry_file):
+    with open(registry_file, "w") as f:
+        f.write(name)
+
+    print(bold_text(f'Device name {colorful_text(name, 33)}'), bold_text(f'has been registered in {registry_file}'))
+
+
+def get_registry_path():
+    return os.environ.get("MOUNTY_REGISTRY", os.path.expanduser("~/.mounty_registry"))
+
+
+def get_device_name():
+    registry_file = get_registry_path()
+    if os.path.exists(registry_file):
+        with open(registry_file, "r") as f:
+            return f.read().strip()
+    else:
+        return 'unknown device'
 
 
 def get_local_ip():
@@ -103,6 +125,7 @@ def bold_text(text):
 
 def listen(port=8000, auto_confirm=False):
     app = Flask(__name__)
+    app.logger.disabled = True
     log = logging.getLogger("werkzeug")
     log.setLevel(logging.ERROR)
 
@@ -160,7 +183,13 @@ def listen(port=8000, auto_confirm=False):
         print(f'\n🔎 {bold_text("Listening on:")} {colorful_text(get_local_ip(), 32)}')
         return "Invalid request", 400
 
-    print(f'🗻 {bold_text("Mounty is listening on:")} {colorful_text(get_local_ip(), 32)}')
+    name = get_device_name()
+    if name == 'unknown device':
+        warnings.warn(
+            f'🗻 {bold_text("Warning:")} '
+            f'{colorful_text("Device name is unknown. Please register a device name using mounty register.", 33)}')
+
+    print(f'🗻 {bold_text(f"Mounty user {name} is listening on:")} {colorful_text(get_local_ip(), 32)}')
     # Start the multicast listener in a separate thread
     multicast_thread = threading.Thread(target=multicast_listener, daemon=True)
     multicast_thread.start()
@@ -168,7 +197,7 @@ def listen(port=8000, auto_confirm=False):
 
 
 def share(filename, target_ip=None, port=8000):
-    print(f'🗻 {bold_text("Mounty is sharing:")} {colorful_text(filename, 32)}')
+    print(f'🗻 {bold_text("Mounty is sharing:")} {colorful_text(filename if filename is not None else "stdin", 32)}')
     if filename is not None and not os.path.exists(filename):
         print(f'{bold_text("Error:")} {colorful_text("File not found.", 31)}')
         sys.exit(1)
@@ -234,6 +263,9 @@ def main():
 
     subparsers.add_parser('discover', help='Discover devices on the local network')
 
+    register = subparsers.add_parser('register', help='Register a name for your device')
+    register.add_argument('username', help='Username')
+
     args = parser.parse_args()
 
     if args.command == 'listen':
@@ -252,6 +284,9 @@ def main():
             print(f'{bold_text("Devices:")}')
             for device in devices:
                 print(f'  {device}')
+    elif args.command == 'register':
+        registry_file = get_registry_path()
+        register_device(args.username, registry_file)
 
 
 if __name__ == "__main__":
