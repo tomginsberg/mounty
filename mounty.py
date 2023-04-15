@@ -134,11 +134,12 @@ def listen(port=8000, auto_confirm=False):
         if request.method == "POST":
             filename = request.headers.get("X-Filename")
             filesize = request.headers.get("X-Filesize")
+            device_name = request.headers.get("X-Device")
             if filename and filesize:
                 print(f'{bold_text("Incoming File:")} {colorful_text(filename, 34)}')
                 file_size = f'{int(filesize) / 1024 / 1024:.2f} MB'
                 print(f'{bold_text("Size:")} {colorful_text(file_size, 34)}')
-                print(f'{bold_text("Source IP:")} {colorful_text(request.remote_addr, 34)}')
+                print(f'{bold_text("Sender:")} {colorful_text(device_name, 34)}')
 
                 if auto_confirm:
                     confirm = "y"
@@ -196,24 +197,24 @@ def listen(port=8000, auto_confirm=False):
     app.run(host="0.0.0.0", port=port)
 
 
-def share(filename, target_ip=None, port=8000):
+def share(filename, port=8000):
     print(f'🗻 {bold_text("Mounty is sharing:")} {colorful_text(filename if filename is not None else "stdin", 32)}')
     if filename is not None and not os.path.exists(filename):
         print(f'{bold_text("Error:")} {colorful_text("File not found.", 31)}')
         sys.exit(1)
-    if target_ip is None:
-        devices = discover_devices()
-        if len(devices) == 0:
-            print(f'{bold_text("Error:")} {colorful_text("No devices found.", 31)}')
-            sys.exit(1)
-        elif len(devices) == 1:
-            target_ip = devices[0]
+
+    devices = discover_devices()
+    if len(devices) == 0:
+        print(f'{bold_text("Error:")} {colorful_text("No devices found.", 31)}')
+        sys.exit(1)
+    elif len(devices) == 1:
+        device_spec = devices[0]
+    else:
+        if iterfzf is not None:
+            device_spec = iterfzf.iterfzf(devices)
         else:
-            if iterfzf is not None:
-                target_ip = iterfzf.iterfzf(devices)
-            else:
-                target_ip = select_device()
-        target_ip = target_ip.split("(")[1][: -1]
+            device_spec = select_device()
+    target_ip = device_spec.split("(")[1][: -1]
 
     if filename is not None:
         filesize = os.path.getsize(filename)
@@ -225,7 +226,7 @@ def share(filename, target_ip=None, port=8000):
 
     print(f'{bold_text("Sharing:")} {colorful_text(filename, 34)}')
     print(f'{bold_text("Size:")} {colorful_text(file_size, 34)}')
-    print(f'{bold_text("Sending to:")} {colorful_text(target_ip, 32)}')
+    print(f'{bold_text("Sending to:")} {colorful_text(device_spec, 32)}')
 
     url = f'http://{target_ip}:{port}/'
     try:
@@ -235,6 +236,7 @@ def share(filename, target_ip=None, port=8000):
                     "Content-Length": str(filesize),
                     "X-Filename": os.path.basename(filename),
                     "X-Filesize": str(filesize),
+                    "X-Device": f'{get_device_name()} ({get_local_ip()})'
                 })
         # otherwise read from std in
         else:
@@ -242,6 +244,7 @@ def share(filename, target_ip=None, port=8000):
                 "Content-Length": str(len(file_data)),
                 "X-Filename": "download",
                 "X-Filesize": str(len(file_data)),
+                "X-Device": f'{get_device_name()} ({get_local_ip()})'
             })
         print(
             f'{bold_text("Response:")} {colorful_text(response.status_code, 34)} {colorful_text(response.reason, 34)}')
