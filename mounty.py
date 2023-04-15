@@ -216,6 +216,7 @@ def share(filename, port=8000):
             device_spec = select_device()
     target_ip = device_spec.split("(")[1][: -1]
 
+    file_data = None
     if filename is not None:
         filesize = os.path.getsize(filename)
     else:
